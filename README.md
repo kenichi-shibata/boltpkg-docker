@@ -46,6 +46,39 @@ In your local machine to make it run faster you can use docker `Host` Network in
 docker run -it --network host -v $(PWD):/home/node/app kenichishibata/boltpkg:node-12
 ```
 
+## Use in multi stage build
+
+```
+# build stage
+FROM kenichishibata/boltpkg:node-12 as builder
+WORKDIR /home/node/app
+COPY --chown=node:node ./ ./
+
+RUN bolt
+RUN npm install svelte@^3.19.2 --no-package-lock
+RUN cd services/web && npm run build
+
+# Run stage
+FROM node:12-alpine
+
+RUN mkdir /home/node/app/ && chown -R node:node /home/node/app
+RUN mkdir -p /home/node/app/__sapper__/build && chown -R node:node /home/node/app/__sapper__/
+
+USER node
+
+WORKDIR /home/node/app
+
+COPY --from=builder --chown=node:node /home/node/app/services/web/package.json ./
+COPY --from=builder --chown=node:node /home/node/app/services/web/static ./static
+COPY --from=builder --chown=node:node /home/node/app/services/web/rollup.config.js ./rollup.config.js
+COPY --from=builder --chown=node:node /home/node/app/services/web/src ./src
+COPY --from=builder --chown=node:node /home/node/app/services/web/__sapper__/build ./__sapper__/build
+
+RUN ls -al && ls -al __sapper__/build
+
+CMD ["npm", "start"]
+```
+
 ## Build it locally (avoid pull from dockerhub)
 
 ```
