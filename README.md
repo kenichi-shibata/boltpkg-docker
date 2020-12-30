@@ -36,5 +36,25 @@ docker pull kenichishibata/boltpkg:node-12
 ### Bolt install your project
 
 ```
+cd <your project dir>
 docker run -it -v $(PWD):/home/node/app kenichishibata/boltpkg:node-12
 ```
+
+In your local machine to make it run faster you can use docker `Host` Network instead of `Bridge` Network which causes additional hop and makes your build slower
+
+```
+docker run -it --network host -v $(PWD):/home/node/app kenichishibata/boltpkg:node-12
+```
+
+## Build it locally (avoid pull from dockerhub)
+
+```
+ git clone https://github.com/kenichi-shibata/boltpkg-docker
+ docker build -t kenichishibata/boltpkg:node-12 .
+```
+
+## Troubleshooting 
+
+* If this failed with ` "ENOENT: no such file or directory, node_modules` make sure you clean all `node_modules` first before you run `docker run` mounted with your local directory. 
+
+This is due to permissions error. 
